@@ -1,12 +1,16 @@
 package main
 
 import (
-	"bufio"
 	"fmt"
 	"os"
 	"os/exec"
 	"runtime"
 	"strings"
+
+	"fyne.io/fyne/v2"
+	"fyne.io/fyne/v2/app"
+	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/widget"
 )
 
 type GOOS int
@@ -18,50 +22,64 @@ const (
 )
 
 func main() {
-	reader := bufio.NewReader(os.Stdin)
-	for {
+	myApp := app.New()
+	myWindow := myApp.NewWindow("Shell Lite")
 
-		fmt.Print("-> ")
-		// Read the keyboad input.
-		input, err := reader.ReadString('\n')
-		if err != nil {
-			fmt.Fprintln(os.Stderr, err)
-		}
+	// Input field and output box
+	inputField := widget.NewEntry()
+	inputField.SetPlaceHolder("Enter a command...")
 
-		// Execution of the input
-		err = execInput(input)
+	outputLabel := widget.NewLabel("Output will appear here.")
+
+	// Execute button
+	executeButton := widget.NewButton("Execute", func() {
+		command := inputField.Text
+		output, err := execInput(command)
 		if err != nil {
-			fmt.Fprintln(os.Stderr, err)
+			outputLabel.SetText(fmt.Sprintf("Error: %s", err))
+		} else {
+			outputLabel.SetText(output)
 		}
-	}
+	})
+
+	content := container.NewVBox(
+		widget.NewLabel("Command Executor"),
+		inputField,
+		executeButton,
+		outputLabel,
+	)
+
+	myWindow.SetContent(content)
+	myWindow.Resize(fyne.NewSize(400, 300))
+	myWindow.ShowAndRun()
 }
 
-func execInput(input string) error {
-	// Remove the newLine character.
+// execInput processes the command input and executes it
+func execInput(input string) (string, error) {
+	// Remove newline and split into arguments
 	input = strings.TrimSpace(input)
-
-	// Split the input into command and arguments
 	args := strings.Split(input, " ")
 
-	// Handle the 'cd' command separately
+	// Handle 'cd' command separately
 	if args[0] == "cd" {
 		if len(args) < 2 {
-			return fmt.Errorf("cd: missing argument")
+			return "", fmt.Errorf("cd: missing argument")
 		}
-		return os.Chdir(args[1])
+		err := os.Chdir(args[1])
+		if err != nil {
+			return "", err
+		}
+		return "Changed directory successfully.", nil
 	}
 
-	// For other commands, execute them directly
+	// Execute other commands
 	cmd, err := execCommand(args)
 	if err != nil || cmd == nil {
-		fmt.Fprintln(os.Stderr, err)
+		return "", err
 	}
 
-	// Execute the command
-	cmd.Stdin = os.Stdin
-	cmd.Stderr = os.Stderr
-	cmd.Stdout = os.Stdout
-	return cmd.Run()
+	outputBytes, err := cmd.CombinedOutput()
+	return string(outputBytes), err
 }
 
 func execCommand(args []string) (*exec.Cmd, error) {
