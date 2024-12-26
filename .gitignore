@@ -31,5 +31,3 @@ go.sum
 # OS generated files
 .DS_Store
 Thumbs.db
-
-imgs/
