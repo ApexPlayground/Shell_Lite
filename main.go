@@ -1,57 +1,44 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
 	"os"
 	"os/exec"
 	"runtime"
 	"strings"
-
-	"fyne.io/fyne/v2"
-	"fyne.io/fyne/v2/app"
-	"fyne.io/fyne/v2/container"
-	"fyne.io/fyne/v2/widget"
-)
-
-type GOOS int
-
-const (
-	Linux GOOS = iota
-	Windows
-	Darwin
 )
 
 func main() {
-	myApp := app.New()
-	myWindow := myApp.NewWindow("Shell Lite")
+	fmt.Println("Shell Lite - Command Executor")
+	fmt.Println("Type 'exit' to quit.")
 
-	// Input field and output box
-	inputField := widget.NewEntry()
-	inputField.SetPlaceHolder("Enter a command...")
+	reader := bufio.NewReader(os.Stdin)
 
-	outputLabel := widget.NewLabel("Output will appear here.")
-
-	// Execute button
-	executeButton := widget.NewButton("Execute", func() {
-		command := inputField.Text
-		output, err := execInput(command)
+	for {
+		fmt.Print("> ")
+		input, err := reader.ReadString('\n')
 		if err != nil {
-			outputLabel.SetText(fmt.Sprintf("Error: %s", err))
-		} else {
-			outputLabel.SetText(output)
+			fmt.Printf("Error reading input: %v\n", err)
+			continue
 		}
-	})
 
-	content := container.NewVBox(
-		widget.NewLabel("Command Executor"),
-		inputField,
-		executeButton,
-		outputLabel,
-	)
+		input = strings.TrimSpace(input)
 
-	myWindow.SetContent(content)
-	myWindow.Resize(fyne.NewSize(400, 300))
-	myWindow.ShowAndRun()
+		// Exit condition
+		if input == "exit" {
+			fmt.Println("Exiting Shell Lite. Goodbye!")
+			break
+		}
+
+		// Execute the command
+		output, err := execInput(input)
+		if err != nil {
+			fmt.Printf("Error: %s\n", err)
+		} else {
+			fmt.Println(output)
+		}
+	}
 }
 
 // execInput processes the command input and executes it
