@@ -5,7 +5,16 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"runtime"
 	"strings"
+)
+
+type GOOS int
+
+const (
+	Linux GOOS = iota
+	Windows
+	Darwin
 )
 
 func main() {
@@ -43,11 +52,25 @@ func execInput(input string) error {
 	}
 
 	// For other commands, execute them directly
-	cmd := exec.Command("cmd", "/C", strings.Join(args, " "))
-
-	cmd.Stderr = os.Stderr
-	cmd.Stdout = os.Stdout
+	cmd, err := execCommand(args)
+	if err != nil || cmd == nil {
+		fmt.Fprintln(os.Stderr, err)
+	}
 
 	// Execute the command
+	cmd.Stdin = os.Stdin
+	cmd.Stderr = os.Stderr
+	cmd.Stdout = os.Stdout
 	return cmd.Run()
+}
+
+func execCommand(args []string) (*exec.Cmd, error) {
+	switch runtime.GOOS {
+	case "windows":
+		return exec.Command("cmd", "/C", strings.Join(args, " ")), nil
+	case "darwin", "linux":
+		return exec.Command("/bin/sh", "-c", strings.Join(args, " ")), nil
+	default:
+		return nil, fmt.Errorf("OS not supported")
+	}
 }
