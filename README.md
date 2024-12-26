@@ -14,10 +14,6 @@ Shell Lite is a simple command-line tool for executing shell commands interactiv
 - [Go](https://go.dev/) (1.18 or later)
 - Compatible with Linux, macOS, and Windows operating systems.
 
-## Installation
+## Test
 
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/your-username/shell-lite.git
-   cd shell-lite
-   ```
+![Shell Lite Demo](imgs/test.png "Shell Lite in Action")
